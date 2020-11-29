@@ -6,6 +6,7 @@ import local_search
 from collections import defaultdict
 
 import distance_functions
+from GA import GeneticAlgorithm
 from parse import parseCSV
 
 # =============================================================
@@ -16,7 +17,7 @@ METERS_PER_MILE = 1609.34
 # PROBLEM_TYPE
 # 1 --> mFSTSP optimal
 # 2 --> mFSTSP heuristic (will need other parameters)
-problemTypeString = {1: 'mFSTSP IP', 2: 'mFSTSP Heuristic'}
+problemTypeString = {1: "mFSTSP IP", 2: "mFSTSP Heuristic"}
 
 NODE_TYPE_DEPOT = 0
 NODE_TYPE_CUST = 1
@@ -36,6 +37,7 @@ ACT_DONE = 2
 
 # =============================================================
 
+
 def make_dict():
     return defaultdict(make_dict)
 
@@ -47,8 +49,19 @@ def make_dict():
 # j = 12
 # tau[v][i][j] = 44
 
+
 class make_node:
-    def __init__(self, nodeType, latDeg, lonDeg, altMeters, parcelWtLbs, serviceTimeTruck, serviceTimeUAV, address):
+    def __init__(
+        self,
+        nodeType,
+        latDeg,
+        lonDeg,
+        altMeters,
+        parcelWtLbs,
+        serviceTimeTruck,
+        serviceTimeUAV,
+        address,
+    ):
         # Set node[nodeID]
         self.nodeType = nodeType
         self.latDeg = latDeg
@@ -64,8 +77,21 @@ class make_node:
 
 
 class make_vehicle:
-    def __init__(self, vehicleType, takeoffSpeed, cruiseSpeed, landingSpeed, yawRateDeg, cruiseAlt, capacityLbs,
-                 launchTime, recoveryTime, serviceTime, batteryPower, flightRange):
+    def __init__(
+        self,
+        vehicleType,
+        takeoffSpeed,
+        cruiseSpeed,
+        landingSpeed,
+        yawRateDeg,
+        cruiseAlt,
+        capacityLbs,
+        launchTime,
+        recoveryTime,
+        serviceTime,
+        batteryPower,
+        flightRange,
+    ):
         # Set vehicle[vehicleID]
         self.vehicleType = vehicleType
         self.takeoffSpeed = takeoffSpeed
@@ -85,8 +111,17 @@ class make_vehicle:
 
 
 class make_travel:
-    def __init__(self, takeoffTime, flyTime, landTime, totalTime, takeoffDistance, flyDistance, landDistance,
-                 totalDistance):
+    def __init__(
+        self,
+        takeoffTime,
+        flyTime,
+        landTime,
+        totalTime,
+        takeoffDistance,
+        flyDistance,
+        landDistance,
+        totalDistance,
+    ):
         # Set travel[vehicleID][fromID][toID]
         self.takeoffTime = takeoffTime
         self.flyTime = flyTime
@@ -119,33 +154,63 @@ class MTSP:
 
         # Calculate travel times of UAVs (travel times of truck has already been read when we called the readData function)
         # NOTE:  For each vehicle we're going to get a matrix of travel times from i to j,
-        #		 where i is in [0, # of customers] and j is in [0, # of customers].
-        #		 However, tau and tauPrime let node c+1 represent a copy of the depot.
+        # 		 where i is in [0, # of customers] and j is in [0, # of customers].
+        # 		 However, tau and tauPrime let node c+1 represent a copy of the depot.
         for vehicleID in self.vehicle:
-            if (self.vehicle[vehicleID].vehicleType == TYPE_UAV):
+            if self.vehicle[vehicleID].vehicleType == TYPE_UAV:
                 # We have a UAV (Note:  In some problems we only have a truck)
                 for i in self.node:
                     for j in self.node:
-                        if (j == i):
-                            self.travel[vehicleID][i][j] = make_travel(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+                        if j == i:
+                            self.travel[vehicleID][i][j] = make_travel(
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+                            )
                         else:
-                            [takeoffTime, flyTime, landTime, totalTime, takeoffDistance, flyDistance, landDistance,
-                             totalDistance] = distance_functions.calcMultirotorTravelTime(
-                                self.vehicle[vehicleID].takeoffSpeed, self.vehicle[vehicleID].cruiseSpeed,
-                                self.vehicle[vehicleID].landingSpeed, self.vehicle[vehicleID].yawRateDeg,
-                                self.node[i].altMeters, self.vehicle[vehicleID].cruiseAlt, self.node[j].altMeters,
-                                self.node[i].latDeg, self.node[i].lonDeg, self.node[j].latDeg, self.node[j].lonDeg,
-                                -361, -361)
-                            self.travel[vehicleID][i][j] = make_travel(takeoffTime, flyTime, landTime, totalTime,
-                                                                       takeoffDistance, flyDistance, landDistance,
-                                                                       totalDistance)
-
-        local_search.search(self.node, self.vehicle, self.travel)
+                            [
+                                takeoffTime,
+                                flyTime,
+                                landTime,
+                                totalTime,
+                                takeoffDistance,
+                                flyDistance,
+                                landDistance,
+                                totalDistance,
+                            ] = distance_functions.calcMultirotorTravelTime(
+                                self.vehicle[vehicleID].takeoffSpeed,
+                                self.vehicle[vehicleID].cruiseSpeed,
+                                self.vehicle[vehicleID].landingSpeed,
+                                self.vehicle[vehicleID].yawRateDeg,
+                                self.node[i].altMeters,
+                                self.vehicle[vehicleID].cruiseAlt,
+                                self.node[j].altMeters,
+                                self.node[i].latDeg,
+                                self.node[i].lonDeg,
+                                self.node[j].latDeg,
+                                self.node[j].lonDeg,
+                                -361,
+                                -361,
+                            )
+                            self.travel[vehicleID][i][j] = make_travel(
+                                takeoffTime,
+                                flyTime,
+                                landTime,
+                                totalTime,
+                                takeoffDistance,
+                                flyDistance,
+                                landDistance,
+                                totalDistance,
+                            )
 
     def readData(self, numUAVs):
         # b)  tbl_vehicles.csv
         tmpUAVs = 0
-        rawData = parseCSV(self.vehicles_file, returnJagged=False, fillerValue=-1, delimiter=',', commentChar='%')
+        rawData = parseCSV(
+            self.vehicles_file,
+            returnJagged=False,
+            fillerValue=-1,
+            delimiter=",",
+            commentChar="%",
+        )
         for i in range(0, len(rawData)):
             vehicleID = int(rawData[i][0])
             vehicleType = int(rawData[i][1])
@@ -161,23 +226,54 @@ class MTSP:
             batteryPower = float(rawData[i][11])  # [joules].
             flightRange = str(rawData[i][12])  # 'high' or 'low'
 
-            if (vehicleType == TYPE_UAV):
+            if vehicleType == TYPE_UAV:
                 tmpUAVs += 1
-                if (tmpUAVs <= numUAVs):
-                    self.vehicle[vehicleID] = make_vehicle(vehicleType, takeoffSpeed, cruiseSpeed, landingSpeed,
-                                                           yawRateDeg, cruiseAlt, capacityLbs, launchTime, recoveryTime,
-                                                           serviceTime, batteryPower, flightRange)
+                if tmpUAVs <= numUAVs:
+                    self.vehicle[vehicleID] = make_vehicle(
+                        vehicleType,
+                        takeoffSpeed,
+                        cruiseSpeed,
+                        landingSpeed,
+                        yawRateDeg,
+                        cruiseAlt,
+                        capacityLbs,
+                        launchTime,
+                        recoveryTime,
+                        serviceTime,
+                        batteryPower,
+                        flightRange,
+                    )
             else:
-                self.vehicle[vehicleID] = make_vehicle(vehicleType, takeoffSpeed, cruiseSpeed, landingSpeed, yawRateDeg,
-                                                       cruiseAlt, capacityLbs, launchTime, recoveryTime, serviceTime,
-                                                       batteryPower, flightRange)
+                self.vehicle[vehicleID] = make_vehicle(
+                    vehicleType,
+                    takeoffSpeed,
+                    cruiseSpeed,
+                    landingSpeed,
+                    yawRateDeg,
+                    cruiseAlt,
+                    capacityLbs,
+                    launchTime,
+                    recoveryTime,
+                    serviceTime,
+                    batteryPower,
+                    flightRange,
+                )
 
-        if (tmpUAVs < numUAVs):
-            print("WARNING: You requested %d UAVs, but we only have data on %d UAVs." % (numUAVs, tmpUAVs))
+        if tmpUAVs < numUAVs:
+            print(
+                "WARNING: You requested %d UAVs, but we only have data on %d UAVs."
+                % (numUAVs, tmpUAVs)
+            )
             print("\t We'll solve the problem with %d UAVs.  Sorry." % (tmpUAVs))
 
         # a)  tbl_locations.csv
-        rawData = parseCSV(self.locations_file, returnJagged=False, fillerValue=-1, delimiter=',', commentChar='%')
+        rawData = parseCSV(
+            self.locations_file,
+            returnJagged=False,
+            fillerValue=-1,
+            delimiter=",",
+            commentChar="%",
+        )
         for i in range(0, len(rawData)):
             nodeID = int(rawData[i][0])
             nodeType = int(rawData[i][1])
@@ -185,14 +281,19 @@ class MTSP:
             lonDeg = float(rawData[i][3])  # IN DEGREES
             altMeters = float(rawData[i][4])
             parcelWtLbs = float(rawData[i][5])
-            if (len(rawData[i]) == 10):
+            if len(rawData[i]) == 10:
                 addressStreet = str(rawData[i][6])
                 addressCity = str(rawData[i][7])
                 addressST = str(rawData[i][8])
                 addressZip = str(rawData[i][9])
-                address = '%s, %s, %s, %s' % (addressStreet, addressCity, addressST, addressZip)
+                address = "%s, %s, %s, %s" % (
+                    addressStreet,
+                    addressCity,
+                    addressST,
+                    addressZip,
+                )
             else:
-                address = ''  # or None?
+                address = ""  # or None?
 
             serviceTimeTruck = self.vehicle[1].serviceTime
             if numUAVs > 0:
@@ -200,13 +301,23 @@ class MTSP:
             else:
                 serviceTimeUAV = 0
 
-            self.node[nodeID] = make_node(nodeType, latDeg, lonDeg, altMeters, parcelWtLbs, serviceTimeTruck,
-                                          serviceTimeUAV, address)
+            self.node[nodeID] = make_node(
+                nodeType,
+                latDeg,
+                lonDeg,
+                altMeters,
+                parcelWtLbs,
+                serviceTimeTruck,
+                serviceTimeUAV,
+                address,
+            )
 
         # c) tbl_truck_travel_data.csv
-        if (os.path.isfile(self.dist_matrix_file)):
+        if os.path.isfile(self.dist_matrix_file):
             # Travel matrix file exists
-            rawData = parseCSV(self.dist_matrix_file, returnJagged=False, fillerValue=-1, delimiter=',')
+            rawData = parseCSV(
+                self.dist_matrix_file, returnJagged=False, fillerValue=-1, delimiter=","
+            )
             for i in range(0, len(rawData)):
                 tmpi = int(rawData[i][0])
                 tmpj = int(rawData[i][1])
@@ -214,23 +325,37 @@ class MTSP:
                 tmpDist = float(rawData[i][3])
 
                 for vehicleID in self.vehicle:
-                    if (self.vehicle[vehicleID].vehicleType == TYPE_TRUCK):
-                        self.travel[vehicleID][tmpi][tmpj] = make_travel(0.0, tmpTime, 0.0, tmpTime, 0.0, tmpDist, 0.0,
-                                                                         tmpDist)
+                    if self.vehicle[vehicleID].vehicleType == TYPE_TRUCK:
+                        self.travel[vehicleID][tmpi][tmpj] = make_travel(
+                            0.0, tmpTime, 0.0, tmpTime, 0.0, tmpDist, 0.0, tmpDist
+                        )
 
         else:
             # Travel matrix file does not exist
             print(
-                "ERROR: Truck travel data is not available. Please provide a data matrix in the following format in a CSV file, and try again:\n")
-            print("from node ID | to node ID | travel time [seconds] | travel distance [meters]\n")
+                "ERROR: Truck travel data is not available. Please provide a data matrix in the following format in a CSV file, and try again:\n"
+            )
+            print(
+                "from node ID | to node ID | travel time [seconds] | travel distance [meters]\n"
+            )
             exit()
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
-        MTSP("data/locations/tbl_locations_01.csv", "data/locations/tbl_truck_travel_data_01.csv",
-             "data/vehicles/tbl_vehicles_01.csv", 4)
+        mtsp_model = MTSP(
+            "data/locations/tbl_locations_01.csv",
+            "data/locations/tbl_truck_travel_data_01.csv",
+            "data/vehicles/tbl_vehicles_01.csv",
+            4,
+        )
+        # local_search.search(mtsp_model.node, mtsp_model.vehicle, mtsp_model.travel)
+
+        ga = GeneticAlgorithm(mtsp_model.node, mtsp_model.vehicle, mtsp_model.travel)
+
+        nodes = [0, 1, 2, 4, 3, 0]
+        drone_nodes = [0, 0, 1, 2, 4, 0]
+        ga.evaluate(nodes, drone_nodes)
     except:
         print("There was a problem.  Sorry things didn't work out.  Bye.")
         raise
