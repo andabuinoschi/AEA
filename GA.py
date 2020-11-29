@@ -12,6 +12,7 @@ class GeneticAlgorithm:
         self.vehicles = vehicles
         self.travel_time = travel_time
         self.number_of_vehicles = len(self.vehicles)
+        self.populations = []
         self.initialize()
 
     def initialize(self):
@@ -23,8 +24,6 @@ class GeneticAlgorithm:
                         node.truck_only = False
                     else:
                         node.truck_only = True
-
-        self.populations = []
 
         for p in range(self.population_size):
             self.populations.append(self.generate_population())
@@ -60,7 +59,9 @@ class GeneticAlgorithm:
                 last_truck_node = n
                 c += max(truck_time, max_drone_cost)
             else:  # if drone
-                drone_costs[(d + 1, n)] = self.travel_time[d + 1][last_truck_node][n].totalTime
+                drone_costs[(d + 1, n)] = self.travel_time[d + 1][last_truck_node][
+                    n
+                ].totalTime
 
         print(c)
 
@@ -69,10 +70,18 @@ class GeneticAlgorithm:
         Get maximum time for drone delivery from node i(launch node) to node k(rendezvous node)
         :return:
         """
-        return max([0] + [dc + self.travel_time[d[0]][d[1]][rendezvous_node].totalTime for d, dc in drone_costs.items()])
+        return max(
+            [0]
+            + [
+                dc + self.travel_time[d[0]][d[1]][rendezvous_node].totalTime
+                for d, dc in drone_costs.items()
+            ]
+        )
 
     def run(self):
-        print(f"Starting Genetic Algorithm for {len(self.nodes)} nodes and {self.number_of_vehicles - 1} drones")
+        print(
+            f"Starting Genetic Algorithm for {len(self.nodes)} nodes and {self.number_of_vehicles - 1} drones"
+        )
 
         current_iteration = 0
         feasible_populations = []
