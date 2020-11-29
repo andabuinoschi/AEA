@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 
 class GeneticAlgorithm:
@@ -12,6 +13,7 @@ class GeneticAlgorithm:
         self.vehicles = vehicles
         self.travel_time = travel_time
         self.number_of_vehicles = len(self.vehicles)
+        self.number_of_nodes = len(self.nodes)
         self.populations = []
         self.initialize()
 
@@ -29,21 +31,32 @@ class GeneticAlgorithm:
             self.populations.append(self.generate_population())
 
     def generate_population(self):
+        """
+        Generate population by randomly assign a node to a vehicle.
+        It makes sure that a drone has a rendezvous node.
+        It doesn't take the endurance restrictions into account.
+        :return:
+        """
         population = [0]
         vehicle_rendezvous = [True for _ in range(len(self.vehicles))]
 
-        for _ in range(len(self.nodes) - 1):
-            vehicle = random.randint(0, self.number_of_vehicles - 1)
-            while vehicle_rendezvous[vehicle] is False:
-                vehicle = random.randint(0, self.number_of_vehicles - 1)
-
-            if vehicle == 0:
-                vehicle_rendezvous = [True for _ in range(len(self.vehicles))]
+        tour_permutation = [0] + list(np.random.permutation(self.number_of_nodes - 1) + 1)
+        for n in range(len(self.nodes) - 1):
+            tn = tour_permutation[n]
+            if self.nodes[tn].truck_only:
+                vehicle = 0
             else:
-                vehicle_rendezvous[vehicle] = False
+                vehicle = random.randint(0, self.number_of_vehicles - 1)
+                while vehicle_rendezvous[vehicle] is False:
+                    vehicle = random.randint(0, self.number_of_vehicles - 1)
+
+                if vehicle == 0:
+                    vehicle_rendezvous = [True for _ in range(len(self.vehicles))]
+                else:
+                    vehicle_rendezvous[vehicle] = False
             population.append(vehicle)
 
-        return population
+        return tour_permutation, population
 
     def select(self):
         pass

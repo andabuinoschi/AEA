@@ -1,8 +1,6 @@
 import os
 import os.path
 import time
-import local_search
-
 from collections import defaultdict
 
 import distance_functions
@@ -52,15 +50,15 @@ def make_dict():
 
 class make_node:
     def __init__(
-        self,
-        nodeType,
-        latDeg,
-        lonDeg,
-        altMeters,
-        parcelWtLbs,
-        serviceTimeTruck,
-        serviceTimeUAV,
-        address,
+            self,
+            nodeType,
+            latDeg,
+            lonDeg,
+            altMeters,
+            parcelWtLbs,
+            serviceTimeTruck,
+            serviceTimeUAV,
+            address,
     ):
         # Set node[nodeID]
         self.nodeType = nodeType
@@ -78,19 +76,19 @@ class make_node:
 
 class make_vehicle:
     def __init__(
-        self,
-        vehicleType,
-        takeoffSpeed,
-        cruiseSpeed,
-        landingSpeed,
-        yawRateDeg,
-        cruiseAlt,
-        capacityLbs,
-        launchTime,
-        recoveryTime,
-        serviceTime,
-        batteryPower,
-        flightRange,
+            self,
+            vehicleType,
+            takeoffSpeed,
+            cruiseSpeed,
+            landingSpeed,
+            yawRateDeg,
+            cruiseAlt,
+            capacityLbs,
+            launchTime,
+            recoveryTime,
+            serviceTime,
+            batteryPower,
+            flightRange,
     ):
         # Set vehicle[vehicleID]
         self.vehicleType = vehicleType
@@ -112,15 +110,15 @@ class make_vehicle:
 
 class make_travel:
     def __init__(
-        self,
-        takeoffTime,
-        flyTime,
-        landTime,
-        totalTime,
-        takeoffDistance,
-        flyDistance,
-        landDistance,
-        totalDistance,
+            self,
+            takeoffTime,
+            flyTime,
+            landTime,
+            totalTime,
+            takeoffDistance,
+            flyDistance,
+            landDistance,
+            totalDistance,
     ):
         # Set travel[vehicleID][fromID][toID]
         self.takeoffTime = takeoffTime
@@ -341,6 +339,12 @@ class MTSP:
             exit()
 
 
+def test_evaluate(ga):
+    nodes = [0, 3, 25, 23, 7, 4, 13, 8, 2, 9, 22, 15, 20, 1, 12, 16, 11, 6, 5, 17, 24, 19, 21, 14, 10, 18, 0]
+    drone_nodes = [0, 2, 0, 3, 1, 4, 0, 4, 0, 0, 2, 0, 3, 4, 0, 1, 0, 0, 1, 3, 2, 0, 0, 0, 2, 1, 0]
+    ga.evaluate(nodes, drone_nodes)
+
+
 if __name__ == "__main__":
     try:
         mtsp_model = MTSP(
@@ -349,13 +353,10 @@ if __name__ == "__main__":
             "data/vehicles/tbl_vehicles_01.csv",
             4,
         )
-        # local_search.search(mtsp_model.node, mtsp_model.vehicle, mtsp_model.travel)
 
         ga = GeneticAlgorithm(mtsp_model.node, mtsp_model.vehicle, mtsp_model.travel)
+        # test_evaluate(ga)
 
-        nodes = [0, 1, 2, 4, 3, 0]
-        drone_nodes = [0, 0, 1, 2, 4, 0]
-        ga.evaluate(nodes, drone_nodes)
     except:
         print("There was a problem.  Sorry things didn't work out.  Bye.")
         raise
