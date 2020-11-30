@@ -25,6 +25,7 @@ class GeneticAlgorithm:
         self.populations = []
         self.best_solution_score = 1e9
         self.best_solution = []
+        self.penalty_cost = 50000
         self.initialize()
 
     def initialize(self):
@@ -111,10 +112,10 @@ class GeneticAlgorithm:
             else:  # if drone
                 infesability_cost = 0
                 if (d + 1) in drone_costs:
-                    infesability_cost += 100000
+                    infesability_cost += self.penalty_cost
 
                 if self.nodes[n].truck_only:
-                    infesability_cost += 100000
+                    infesability_cost += self.penalty_cost
 
                 drone_costs[d + 1] = (self.travel_time[d + 1][last_truck_node][
                                           n
@@ -131,16 +132,19 @@ class GeneticAlgorithm:
         def penalize_endurance(drone, i, j):
             endurance = give_endurance(self.nodes, self.vehicles, self.travel_time, drone, i, j, rendezvous_node, 1)
             if endurance == -1:
-                return 0
+                return self.penalty_cost
+
             return 0
 
-        return max(
+        max_cost = max(
             [0]
             + [
                 dc[0] + self.travel_time[d][dc[1]][rendezvous_node].totalTime + penalize_endurance(d, dc[2], dc[1])
                 for d, dc in drone_costs.items()
             ]
         )
+
+        return max_cost
 
     def get_parents_pairs(self, parents):
         _parents = parents[:]
