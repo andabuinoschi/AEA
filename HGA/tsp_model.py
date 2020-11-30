@@ -49,15 +49,15 @@ def make_dict():
 
 class make_node:
     def __init__(
-            self,
-            nodeType,
-            latDeg,
-            lonDeg,
-            altMeters,
-            parcelWtLbs,
-            serviceTimeTruck,
-            serviceTimeUAV,
-            address,
+        self,
+        nodeType,
+        latDeg,
+        lonDeg,
+        altMeters,
+        parcelWtLbs,
+        serviceTimeTruck,
+        serviceTimeUAV,
+        address,
     ):
         # Set node[nodeID]
         self.nodeType = nodeType
@@ -75,19 +75,19 @@ class make_node:
 
 class make_vehicle:
     def __init__(
-            self,
-            vehicleType,
-            takeoffSpeed,
-            cruiseSpeed,
-            landingSpeed,
-            yawRateDeg,
-            cruiseAlt,
-            capacityLbs,
-            launchTime,
-            recoveryTime,
-            serviceTime,
-            batteryPower,
-            flightRange,
+        self,
+        vehicleType,
+        takeoffSpeed,
+        cruiseSpeed,
+        landingSpeed,
+        yawRateDeg,
+        cruiseAlt,
+        capacityLbs,
+        launchTime,
+        recoveryTime,
+        serviceTime,
+        batteryPower,
+        flightRange,
     ):
         # Set vehicle[vehicleID]
         self.vehicleType = vehicleType
@@ -109,15 +109,15 @@ class make_vehicle:
 
 class make_travel:
     def __init__(
-            self,
-            takeoffTime,
-            flyTime,
-            landTime,
-            totalTime,
-            takeoffDistance,
-            flyDistance,
-            landDistance,
-            totalDistance,
+        self,
+        takeoffTime,
+        flyTime,
+        landTime,
+        totalTime,
+        takeoffDistance,
+        flyDistance,
+        landDistance,
+        totalDistance,
     ):
         # Set travel[vehicleID][fromID][toID]
         self.takeoffTime = takeoffTime
