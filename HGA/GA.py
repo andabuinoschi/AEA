@@ -1,20 +1,23 @@
 import random
-
+import time
 import numpy as np
 
 from HGA.endurance import give_endurance
 
 
 class GeneticAlgorithm:
-    def __init__(self, nodes, vehicles, travel_time, number_of_iterations=50):
+    def __init__(self, nodes, vehicles, travel_time, output_file_solution, output_file_score, number_of_iterations=20):
         # GA configuration
-        self.population_size = 500
+        self.population_size = 100
         self.number_of_iterations = number_of_iterations
         self.crossover_probability = 0.2
         self.mutation_probability = 0.05
         self.chromosome_mutation_probability = 0.01
         self.tour_mutation_probability = 0.01
         self.drone_mutation_probability = 0.05
+
+        self.output_file_solution = output_file_solution
+        self.output_file_score = output_file_score
 
         # TSP data
         self.nodes = nodes
@@ -26,6 +29,7 @@ class GeneticAlgorithm:
         self.best_solution_score = 1e9
         self.best_solution = []
         self.penalty_cost = 50000
+        self.best_per_iteration = []
         self.initialize()
 
     def initialize(self):
@@ -132,7 +136,7 @@ class GeneticAlgorithm:
         def penalize_endurance(drone, i, j):
             endurance = give_endurance(self.nodes, self.vehicles, self.travel_time, drone, i, j, rendezvous_node, 1)
             if endurance == -1:
-                return self.penalty_cost
+                return 0
 
             return 0
 
@@ -279,10 +283,70 @@ class GeneticAlgorithm:
 
         return offsprings
 
+    def select_neighbours(self, offspring):
+        neighbours = []
+        vehicle_ids = []
+        for i, vehicle in enumerate(offspring[1]):
+            if (
+                    i != 0
+                    and i != (len(offspring[1]) - 1)
+            ):
+                node = offspring[0][i]
+                if self.nodes[node].truck_only:
+                    tmp_state = np.copy(offspring)
+                    tmp_state[1][node] = 0
+                    neighbours.append(tmp_state)
+                else:
+                    if vehicle != 0:
+                        for i in range(self.number_of_vehicles):
+                            if i not in vehicle_ids:
+                                tmp_state = np.copy(offspring)
+                                tmp_state[1][node] = i
+                                neighbours.append(tmp_state)
+                        vehicle_ids.append(vehicle)
+                    else:
+                        vehicle_ids = []
+
+        return neighbours
+
+    def educate(self, offsprings, logging=False):
+        MAX_ITER = 10
+        new_offsprings = []
+        for offspring_no, offspring in enumerate(offsprings):
+            if logging:
+                print(f"Hill climbing for {offspring_no}")
+            it = 0
+            local = False
+            current_state = np.copy(offspring)
+            best_solution = np.copy(offspring)
+            best_solution_cost = self.evaluate(list(current_state[0]) + [0], list(current_state[1]) + [0])
+            while not local and it <= MAX_ITER:
+                last_iter_cost = best_solution_cost
+                it += 1
+                neighbours = self.select_neighbours(current_state)
+                for n_sol in neighbours:
+                    tmp_eval = self.evaluate(list(n_sol[0]) + [0], list(n_sol[1]) + [0])
+                    if tmp_eval < best_solution_cost:
+                        best_solution_cost = tmp_eval
+                        best_solution = n_sol
+
+                current_state = np.copy(best_solution)
+
+                if logging:
+                    print("Hill climbing:  ", best_solution_cost)
+                if last_iter_cost - best_solution_cost <= 1e-8:
+                    local = True
+
+            # print(best_solution)
+            new_offsprings.append(best_solution)
+            best_solution = None
+        return new_offsprings
+
     def run(self):
         print(
             f"Starting Genetic Algorithm for {len(self.nodes)} nodes and {self.number_of_vehicles - 1} drones"
         )
+        start_time = time.time()
 
         current_iteration = 0
 
@@ -313,8 +377,7 @@ class GeneticAlgorithm:
 
                 parents = self.roulette_selection(current_population, fitness)
                 min_eval = min(eval)
-                print(min_eval)
-                print(current_population[np.argmin(eval)])
+                print(f"GA min eval {min_eval} iteration {current_iteration}")
                 if min_eval < self.best_solution_score:
                     self.best_solution_score = min_eval
                     best_sol_idx = np.argmin(eval)
@@ -335,9 +398,14 @@ class GeneticAlgorithm:
                 offsprings = self.mutation(
                     offsprings
                 )
+                offsprings = self.educate(offsprings)
+                current_population = np.copy(offsprings)
+            current_iteration += 1
+            self.best_per_iteration.append(best_iter_score)
 
-                current_population = offsprings
-                current_iteration += 1
-
-        print(self.best_solution)
-        print(self.best_solution_score)
+        # print(self.best_solution)
+        print("Best score: ", self.best_solution_score)
+        print("Average score: ", sum(self.best_per_iteration)/self.number_of_iterations)
+        print("Time: ", time.time() - start_time)
+        np.savetxt(self.output_file_solution, self.best_solution, fmt="%i", delimiter=",")
+        np.savetxt(self.output_file_score, np.array([self.best_solution_score]), delimiter=",")
