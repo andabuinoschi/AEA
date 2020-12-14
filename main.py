@@ -56,7 +56,8 @@ def draw_map(map_file, solution_file, mtsp_model):
 
 if __name__ == "__main__":
     try:
-        problem = "01"
+        # 20170606T115303341654
+        problem = "03"
         output_file_solution_name = f"data/problems/{problem}/solutions/01_solution.csv"
         output_file_score_name = f"data/problems/{problem}/solutions/01_score.csv"
         mtsp_model = MTSP(
