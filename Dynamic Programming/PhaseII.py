@@ -36,31 +36,30 @@ class PhaseII:
     The paper on which the implementation is based can be found at
     https://www.researchgate.net/publication/320075655_Dynamic_Programming_Approaches_for_the_Traveling_Salesman_Problem_with_Drone
     """
-    def __init__(self, path_costs, depot=0):
+    def __init__(self, path_costs, drone_costs, droneable_nodes):
         self.path_costs = path_costs
-        self.depot = depot
         self.n = len(self.path_costs)
-        self.truck_and_drone_subproblems_costs = {}
-        self.droneable_nodes = [3]
-        self.cities_visited_by_drone = [0 for node in range(self.n)]
-        self.drone_costs_paths = [[0, 1, 2, 3], [1, 0, 2, 3], [7, 3, 0, 3], [2, 1, 5, 0]]
+        self.droneable_nodes = droneable_nodes
+        self.drone_costs_paths = drone_costs
         phaseI = PhaseI(path_costs)
         phaseI.solve_subproblems_truck()
+        self.truck_and_drone_subproblems_costs = {}
         self.truck_subproblems_cost = phaseI.subproblem_truck_costs
+        for key, value in self.truck_subproblems_cost.items():
+            self.truck_subproblems_cost[key] = value + (value[1],)
 
-    def solve_subproblems_truck_and_drone(self):
-        v = 0
-
+    def solve_subproblems_truck_and_drone_for_given_depot(self, depot_point=0):
         # Set transition cost from initial state
+        truck_and_drone_subproblems_costs = {}
         for k in range(0, self.n):
-            if k != self.depot:
-                self.truck_and_drone_subproblems_costs[(1 << k, self.depot, k)] = self.truck_subproblems_cost[
-                    (1 << k, self.depot, k)]
+            if k != depot_point:
+                truck_and_drone_subproblems_costs[(1 << k, depot_point, k)] = self.truck_subproblems_cost[
+                    (1 << k, depot_point, k)]
 
         # Iterate subsets of increasing length and store intermediate results
         # in classic dynamic programming manner
         for subset_size in range(2, self.n):
-            for subset in itertools.combinations([node for node in range(0, self.n) if node != self.depot],
+            for subset in itertools.combinations([node for node in range(0, self.n) if node != depot_point],
                                                  subset_size):
                 # Set bits for all nodes in this subset
                 bits = 0
@@ -72,44 +71,71 @@ class PhaseII:
                     prev = bits & ~(1 << k)
                     res = []
                     for d in subset:
-                        if d == self.depot or d == k:
+                        if d == depot_point or d == k:
                             continue
                         if d not in self.droneable_nodes:
-                            res.append((self.truck_subproblems_cost[(prev, self.depot, d)][0] + self.path_costs[d][k], d))
+                            res.append((self.truck_subproblems_cost[(prev, depot_point, d)][0] + self.path_costs[d][k], d) + (d,))
                         else:
                             state_without_drone_node = bits & ~(1 << d)
-                            res.append(max((self.drone_costs_paths[self.depot][d] + self.drone_costs_paths[d][k], k),
-                                           self.truck_subproblems_cost[(state_without_drone_node, self.depot, k)]))
-                    self.truck_and_drone_subproblems_costs[(bits, self.depot, k)] = min(res)
+                            all_previous_nodes = list(truck_and_drone_subproblems_costs[(prev, depot_point, d)][1:])
+                            truck_previous_node = all_previous_nodes[1]
+                            if all_previous_nodes[1] == truck_previous_node:
+                                all_previous_nodes[1] = d
+                                new_value = list(max((self.drone_costs_paths[depot_point][d] + self.drone_costs_paths[d][k], k) + (k,),
+                                               self.truck_subproblems_cost[(state_without_drone_node, depot_point, k)]))
+                                new_value[1:] = all_previous_nodes
+                                new_value = tuple(new_value)
+                                res.append(new_value)
+                    if res:
+                        minimum_value_for_the_state = min(res)
+                        truck_and_drone_subproblems_costs[(bits, depot_point, k)] = minimum_value_for_the_state
+        return truck_and_drone_subproblems_costs
 
-    def backtrack_truck_and_drone_path(self):
+    def solve_subproblems_truck_and_drone(self):
+        self.truck_and_drone_subproblems_costs = self.solve_subproblems_truck_and_drone_for_given_depot(depot_point=0)
+        for depot_point in range(1, self.n):
+            self.truck_and_drone_subproblems_costs.update(self.solve_subproblems_truck_and_drone_for_given_depot(depot_point=depot_point))
+
+    def backtrack_truck_and_drone_path(self, depot_point=0):
         # We're interested in all bits but the least significant (the start state)
-        bits = (2**self.n - 1) - 1
-
+        bits = (2**self.n - 1) - 2 ** depot_point
         # Calculate optimal cost
         res = []
-        for k in range(1, self.n):
-            res.append((self.truck_and_drone_subproblems_costs[(bits, self.depot, k)][0] + self.path_costs[k][self.depot], k))
-        opt, parent = min(res)
+        for k in range(0, self.n):
+            if k != depot_point:
+                res.append((self.truck_and_drone_subproblems_costs[(bits, depot_point, k)][0] + self.path_costs[k][depot_point], k) + (k,))
+        opt, truck_parent, drone_parent = min(res)
 
-        # Backtrack to find full path
-        path = []
-        for i in range(self.n - len(self.droneable_nodes) - 1):
-            path.append(parent)
-            new_bits = bits & ~(1 << parent)
-            _, parent = self.truck_and_drone_subproblems_costs[(bits, self.depot, parent)]
+        visited_nodes = [node for node in range(0, self.n) if node != depot_point]
+        visited_nodes.remove(truck_parent)
+
+        # Backtrack to find full path for truck and for the drone
+        truck_path = []
+        drone_path = []
+        while visited_nodes:
+            truck_path.append(truck_parent)
+            drone_path.append(drone_parent)
+            new_bits = bits & ~(1 << truck_parent) # remove last visited node, not only for truck
+            _, truck_parent, drone_parent = self.truck_and_drone_subproblems_costs[(bits, depot_point, truck_parent)]
             bits = new_bits
 
         # Add implicit start state
-        path.append(self.depot)
+        truck_path.append(depot_point)
+        drone_path.append(depot_point)
 
-        return opt, list(reversed(path))
+        return opt, list(reversed(truck_path)), list(reversed(drone_path))
 
 
 if __name__ == '__main__':
     distances = [[0, 2, 9, 10], [1, 0, 6, 4], [15, 7, 0, 8], [6, 3, 12, 0]]
-    phaseII = PhaseII(distances, depot=0)
+    drone_costs = [[0, 1, 2, 3], [1, 0, 2, 3], [7, 3, 0, 3], [2, 1, 5, 0]]
+    droneable_nodes = [3, 1]
+    phaseII = PhaseII(distances, drone_costs=drone_costs, droneable_nodes=droneable_nodes)
     phaseII.solve_subproblems_truck_and_drone()
+    print(phaseII.solve_subproblems_truck_and_drone_for_given_depot(depot_point=1))
     print(phaseII.truck_and_drone_subproblems_costs)
-    print(phaseII.truck_subproblems_cost)
-    print(phaseII.backtrack_truck_and_drone_path())
+    # still must work on backtrack
+    # print(phaseII.backtrack_truck_and_drone_path(depot_point=0))
+    # print(phaseII.backtrack_truck_and_drone_path(depot_point=1))
+    # print(phaseII.backtrack_truck_and_drone_path(depot_point=2))
+    # print(phaseII.backtrack_truck_and_drone_path(depot_point=3))
