@@ -48,7 +48,7 @@ class GeneticAlgorithm:
 
     def print(self, *args):
         if self.logging:
-            print(args)
+            print(*args)
 
     def initialize_population(self):
         self.populations = []
@@ -406,7 +406,7 @@ class GeneticAlgorithm:
                 offsprings = self.mutation(
                     offsprings
                 )
-                offsprings = self.educate(offsprings)
+                offsprings = self.educate(offsprings, logging=False)
                 current_population = np.copy(offsprings)
             current_iteration += 1
             self.best_per_iteration.append(best_iter_score)

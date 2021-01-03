@@ -1,7 +1,7 @@
 import random
 
 configurations = {
-    "population_size": [50, 75, 100],
+    "population_size": [50, 70, 100],
     "crossover_probability": [0.1, 0.2, 0.3],
     "mutation_probability": [0.05, 0.1, 0.2],
     "chromosome_mutation_probability": [0.01, 0.05, 0.1],

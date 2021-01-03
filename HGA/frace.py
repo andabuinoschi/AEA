@@ -43,7 +43,7 @@ def frace(algorithm, configurations, problems, min_number_of_instances=5):
             conf_hash = hash(frozenset(c.items()))
             print("Running algorithm with conf", c)
             alg = algorithm(instance[0].node, instance[0].vehicle, instance[0].travel, instance[1], instance[2],
-                            number_of_iterations=1, logging=False, **c)
+                            number_of_iterations=1, logging=True, **c)
             score = alg.run()
             if instance[1] not in scores:
                 scores[instance[1]] = {conf_hash: [score]}
@@ -59,11 +59,11 @@ def frace(algorithm, configurations, problems, min_number_of_instances=5):
 
         scores_per_configuration = {}
         for instance, configs in scores.items():
-            for c, scores in configs.items():
+            for c, sc in configs.items():
                 if c not in scores_per_configuration:
-                    scores_per_configuration[c] = scores
+                    scores_per_configuration[c] = sc
                 else:
-                    scores_per_configuration[c] = scores_per_configuration[c] + scores
+                    scores_per_configuration[c] = scores_per_configuration[c] + sc
 
         scores_df = pd.DataFrame.from_dict(scores_per_configuration)
         if it >= min_number_of_instances:
