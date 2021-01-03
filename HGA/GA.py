@@ -1,20 +1,23 @@
 import random
 import time
+
 import numpy as np
 
 from HGA.endurance import give_endurance
 
 
 class GeneticAlgorithm:
-    def __init__(self, nodes, vehicles, travel_time, output_file_solution, output_file_score, number_of_iterations=20):
+    def __init__(self, nodes, vehicles, travel_time, output_file_solution, output_file_score, number_of_iterations=20,
+                 logging=True, population_size=100, crossover_probability=0.2, mutation_probability=0.05,
+                 chromosome_mutation_probability=0.01, tour_mutation_probability=0.01, drone_mutation_probability=0.05):
         # GA configuration
-        self.population_size = 100
+        self.population_size = population_size
         self.number_of_iterations = number_of_iterations
-        self.crossover_probability = 0.2
-        self.mutation_probability = 0.05
-        self.chromosome_mutation_probability = 0.01
-        self.tour_mutation_probability = 0.01
-        self.drone_mutation_probability = 0.05
+        self.crossover_probability = crossover_probability
+        self.mutation_probability = mutation_probability
+        self.chromosome_mutation_probability = chromosome_mutation_probability
+        self.tour_mutation_probability = tour_mutation_probability
+        self.drone_mutation_probability = drone_mutation_probability
 
         self.output_file_solution = output_file_solution
         self.output_file_score = output_file_score
@@ -30,6 +33,7 @@ class GeneticAlgorithm:
         self.best_solution = []
         self.penalty_cost = 50000
         self.best_per_iteration = []
+        self.logging = logging
         self.initialize()
 
     def initialize(self):
@@ -41,6 +45,10 @@ class GeneticAlgorithm:
                         node.truck_only = False
                     else:
                         node.truck_only = True
+
+    def print(self, *args):
+        if self.logging:
+            print(*args)
 
     def initialize_population(self):
         self.populations = []
@@ -353,7 +361,7 @@ class GeneticAlgorithm:
         while current_iteration < self.number_of_iterations:
             self.initialize_population()
             current_population = self.populations[:]
-            print(f"------------------Iteration {current_iteration}------------------")
+            self.print(f"------------------Iteration {current_iteration}------------------")
 
             no_improvement = 0
             best_iter_score = 1e9
@@ -377,7 +385,7 @@ class GeneticAlgorithm:
 
                 parents = self.roulette_selection(current_population, fitness)
                 min_eval = min(eval)
-                print(f"GA min eval {min_eval} iteration {current_iteration}")
+                self.print(f"GA min eval {min_eval} iteration {current_iteration}")
                 if min_eval < self.best_solution_score:
                     self.best_solution_score = min_eval
                     best_sol_idx = np.argmin(eval)
@@ -398,14 +406,15 @@ class GeneticAlgorithm:
                 offsprings = self.mutation(
                     offsprings
                 )
-                offsprings = self.educate(offsprings)
+                offsprings = self.educate(offsprings, logging=False)
                 current_population = np.copy(offsprings)
             current_iteration += 1
             self.best_per_iteration.append(best_iter_score)
 
         # print(self.best_solution)
         print("Best score: ", self.best_solution_score)
-        print("Average score: ", sum(self.best_per_iteration)/self.number_of_iterations)
-        print("Time: ", time.time() - start_time)
+        self.print("Average score: ", sum(self.best_per_iteration) / self.number_of_iterations)
+        self.print("Time: ", time.time() - start_time)
         np.savetxt(self.output_file_solution, self.best_solution, fmt="%i", delimiter=",")
         np.savetxt(self.output_file_score, np.array([self.best_solution_score]), delimiter=",")
+        return self.best_solution_score

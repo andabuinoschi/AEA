@@ -6,6 +6,9 @@ from HGA.GA import GeneticAlgorithm
 from HGA.tsp_model import MTSP
 
 
+# 05 - 20170608T131306913055
+# 04 - 20170608T121651164057
+
 def test_evaluate(ga):
     nodes = [0, 8, 13, 22, 14, 19, 10, 21, 16, 7, 12, 5, 15, 4, 23, 18, 11, 25, 9, 6, 3, 20, 24, 1, 17, 2, 0]
     drone_nodes = [0, 2, 1, 0, 1, 2, 0, 3, 0, 1, 0, 0, 0, 0, 4, 3, 0, 0, 1, 0, 3, 0, 3, 4, 1, 0, 0]
@@ -57,7 +60,7 @@ def draw_map(map_file, solution_file, mtsp_model):
 if __name__ == "__main__":
     try:
         # 20170606T115303341654
-        problem = "03"
+        problem = "05"
         output_file_solution_name = f"data/problems/{problem}/solutions/01_solution.csv"
         output_file_score_name = f"data/problems/{problem}/solutions/01_score.csv"
         mtsp_model = MTSP(
