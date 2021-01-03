@@ -17,6 +17,7 @@ class PhaseIII:
     m is a middle point, c(x,y) represents the truck distance from x to y and D_(phaseII)
     represents the subproblems' costs from Phase II algorithm.
     """
+
     def __init__(self, truck_costs, drone_costs, droneable_nodes, depot_point):
         self.truck_costs = truck_costs
         self.n = len(self.truck_costs)
@@ -35,10 +36,10 @@ class PhaseIII:
         subset_v = [node for node in range(0, self.n) if node != self.depot_point]
         z = {}
         for k in subset_v:
-                self.optimal_subproblem_cost[(1 << k, k)] = (self.truck_costs[self.depot_point][k], k, k)
+            self.optimal_subproblem_cost[(1 << k, k)] = (self.truck_costs[self.depot_point][k], k, k)
         for subset_size_u in range(1, self.n):
             for subset_u in itertools.combinations([node for node in range(0, self.n) if node != self.depot_point],
-                                                 subset_size_u):
+                                                   subset_size_u):
                 # Set bits for all nodes in this subset
                 u_bits = 0
                 for bit in subset_u:
@@ -50,15 +51,19 @@ class PhaseIII:
                         t_bits = 0
                         for bit in subset_t:
                             t_bits |= 1 << bit
-                            for u,w in itertools.product(subset_u, subset_v):
-                                if u != w:
-                                    if not (u_bits | (1 << u) | (1 << w) | t_bits, w) in self.optimal_subproblem_cost:
-                                        self.optimal_subproblem_cost[(u_bits | (1 << u) | (1 << w) | t_bits, w)] = (float('inf'),)
-                                    result_z = self.optimal_subproblem_cost[(u_bits, u)][0] + self.truck_and_drone_subproblems_costs[(t_bits | (1 << w), u, w)][0]
-                                    new_state = (u_bits | (1 << u) | (1 << w) | t_bits, w)
-                                    if result_z < self.optimal_subproblem_cost[new_state][0]:
-                                        self.optimal_subproblem_cost[new_state] = (result_z, self.optimal_subproblem_cost[(u_bits, u)][1:], self.truck_and_drone_subproblems_costs[(t_bits | (1 << w), u, w)][1:])
-
+                        for u, w in itertools.product(subset_u, subset_v):
+                            if u != w:
+                                if not (u_bits | (1 << u) | (1 << w) | t_bits, w) in self.optimal_subproblem_cost:
+                                    self.optimal_subproblem_cost[(u_bits | (1 << u) | (1 << w) | t_bits, w)] = (
+                                    float('inf'),)
+                                result_z = self.optimal_subproblem_cost[(u_bits, u)][0] + \
+                                           self.truck_and_drone_subproblems_costs[(t_bits | (1 << w), u, w)][0]
+                                new_state = (u_bits | (1 << u) | (1 << w) | t_bits, w)
+                                if result_z < self.optimal_subproblem_cost[new_state][0]:
+                                    truck_and_drone_solution = self.truck_and_drone_subproblems_costs[(t_bits | (1 << w), u, w)]
+                                    parent_truck = truck_and_drone_solution[1]
+                                    parent_drone = truck_and_drone_solution[2]
+                                    self.optimal_subproblem_cost[new_state] = (result_z, u, t_bits | (1 << w), parent_truck, parent_drone)
 
     def backtrack_solution(self):
         final_state = 2 ** self.n - 1 - 2 ** self.depot_point
@@ -66,10 +71,17 @@ class PhaseIII:
 
         for k in range(0, self.n):
             if k != self.depot_point:
-                res.append((self.optimal_subproblem_cost[(final_state, k)][0] + self.truck_costs[k][self.depot_point],))
-                #to be continued
-        return res
+                res.append(
+                    (self.optimal_subproblem_cost[(final_state, k)][0] + self.truck_costs[k][self.depot_point], k))
 
+        optimal_cost, parent = min(res)
+        bits = final_state & ~parent
+        truck_path = []
+        drone_path = []
+        truck_path.append(parent)
+        drone_path.append(parent)
+        print(optimal_cost, parent)
+        return res
 
 
 if __name__ == '__main__':
@@ -78,5 +90,6 @@ if __name__ == '__main__':
     droneable_nodes = [3, 1]
     phaseIII = PhaseIII(distances, drone_costs, droneable_nodes, 0)
     phaseIII.solve_entire_problem()
+    print(phaseIII.truck_and_drone_subproblems_costs)
     print(phaseIII.optimal_subproblem_cost)
     print(phaseIII.backtrack_solution())
