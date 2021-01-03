@@ -32,13 +32,13 @@ class PhaseIII:
 
     def solve_entire_problem(self):
         # Create initial states of one element as being a truck delivery to node k
-        v_bits = 2 ** self.n - 1 - 2 ** self.depot_point
-        subset_v = [node for node in range(0, self.n) if node != self.depot_point]
+        v_bits = 2 ** self.n - 1
+        subset_v = [node for node in range(0, self.n)]
         z = {}
         for k in subset_v:
             self.optimal_subproblem_cost[(1 << k, k)] = (self.truck_costs[self.depot_point][k], k, k)
         for subset_size_u in range(1, self.n):
-            for subset_u in itertools.combinations([node for node in range(0, self.n) if node != self.depot_point],
+            for subset_u in itertools.combinations([node for node in range(0, self.n)],
                                                    subset_size_u):
                 # Set bits for all nodes in this subset
                 u_bits = 0
@@ -63,25 +63,10 @@ class PhaseIII:
                                     truck_and_drone_solution = self.truck_and_drone_subproblems_costs[(t_bits | (1 << w), u, w)]
                                     parent_truck = truck_and_drone_solution[1]
                                     parent_drone = truck_and_drone_solution[2]
-                                    self.optimal_subproblem_cost[new_state] = (result_z, u, t_bits | (1 << w), parent_truck, parent_drone)
+                                    self.optimal_subproblem_cost[new_state] = (result_z, u)
 
-    def backtrack_solution(self):
-        final_state = 2 ** self.n - 1 - 2 ** self.depot_point
-        res = []
 
-        for k in range(0, self.n):
-            if k != self.depot_point:
-                res.append(
-                    (self.optimal_subproblem_cost[(final_state, k)][0] + self.truck_costs[k][self.depot_point], k))
 
-        optimal_cost, parent = min(res)
-        bits = final_state & ~parent
-        truck_path = []
-        drone_path = []
-        truck_path.append(parent)
-        drone_path.append(parent)
-        print(optimal_cost, parent)
-        return res
 
 
 if __name__ == '__main__':
@@ -92,4 +77,4 @@ if __name__ == '__main__':
     phaseIII.solve_entire_problem()
     print(phaseIII.truck_and_drone_subproblems_costs)
     print(phaseIII.optimal_subproblem_cost)
-    print(phaseIII.backtrack_solution())
+    # print(phaseIII.backtrack_solution())
