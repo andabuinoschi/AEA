@@ -1,5 +1,5 @@
 import itertools
-from PhaseI import PhaseI
+from Dynamic_Programming.PhaseI import PhaseI
 
 
 class PhaseII:

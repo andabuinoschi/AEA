@@ -1,5 +1,5 @@
 import itertools
-from HeldKarp import HeldKarp
+from Dynamic_Programming.HeldKarp import HeldKarp
 
 
 class PhaseI:

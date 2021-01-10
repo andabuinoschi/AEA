@@ -1,4 +1,4 @@
-from PhaseII import PhaseII
+from Dynamic_Programming.PhaseII import PhaseII
 import itertools
 
 
@@ -76,6 +76,8 @@ class PhaseIII:
         for node in range(self.n - 1, -1, -1):
             new_state = (set_state, parent_u)
             v = parent_u
+            if new_state[0] == 2 ** new_state[1] - 1:
+                break
             _, parent_u, t_bits = self.optimal_subproblem_cost[new_state]
             phase_2_states_along_solution.append((t_bits, parent_u, v))
             set_state &= ~(1 << node)
