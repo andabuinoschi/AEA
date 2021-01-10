@@ -96,35 +96,6 @@ class PhaseII:
         for depot_point in range(1, self.n):
             self.truck_and_drone_subproblems_costs.update(self.solve_subproblems_truck_and_drone_for_given_depot(depot_point=depot_point))
 
-    def backtrack_truck_and_drone_path(self, depot_point=0):
-        # We're interested in all bits but the least significant (the start state)
-        bits = (2**self.n - 1) - 2 ** depot_point
-        # Calculate optimal cost
-        res = []
-        for k in range(0, self.n):
-            if k != depot_point:
-                res.append((self.truck_and_drone_subproblems_costs[(bits, depot_point, k)][0] + self.path_costs[k][depot_point], k) + (k,))
-        opt, truck_parent, drone_parent = min(res)
-
-        visited_nodes = [node for node in range(0, self.n) if node != depot_point]
-        visited_nodes.remove(truck_parent)
-
-        # Backtrack to find full path for truck and for the drone
-        truck_path = []
-        drone_path = []
-        while visited_nodes:
-            truck_path.append(truck_parent)
-            drone_path.append(drone_parent)
-            new_bits = bits & ~(1 << truck_parent) # remove last visited node, not only for truck
-            _, truck_parent, drone_parent = self.truck_and_drone_subproblems_costs[(bits, depot_point, truck_parent)]
-            bits = new_bits
-
-        # Add implicit start state
-        truck_path.append(depot_point)
-        drone_path.append(depot_point)
-
-        return opt, list(reversed(truck_path)), list(reversed(drone_path))
-
 
 if __name__ == '__main__':
     distances = [[0, 2, 9, 10], [1, 0, 6, 4], [15, 7, 0, 8], [6, 3, 12, 0]]
