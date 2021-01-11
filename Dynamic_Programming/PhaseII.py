@@ -78,14 +78,14 @@ class PhaseII:
                         else:
                             state_without_drone_node = bits & ~(1 << d)
                             all_previous_nodes = list(truck_and_drone_subproblems_costs[(prev, depot_point, d)][1:])
-                            truck_previous_node = all_previous_nodes[1]
-                            if all_previous_nodes[1] == truck_previous_node:
-                                all_previous_nodes[1] = d
-                                new_value = list(max((self.drone_costs_paths[depot_point][d] + self.drone_costs_paths[d][k], k) + (k,),
-                                               self.truck_subproblems_cost[(state_without_drone_node, depot_point, k)]))
-                                new_value[1:] = all_previous_nodes
-                                new_value = tuple(new_value)
-                                res.append(new_value)
+                            # truck_previous_node = all_previous_nodes[0]
+                            # if all_previous_nodes[1] == truck_previous_node:
+                            all_previous_nodes[1] = d
+                            new_value = list(max((self.drone_costs_paths[depot_point][d] + self.drone_costs_paths[d][k], k) + (k,),
+                                           self.truck_subproblems_cost[(state_without_drone_node, depot_point, k)]))
+                            new_value[1:] = all_previous_nodes
+                            new_value = tuple(new_value)
+                            res.append(new_value)
                     if res:
                         minimum_value_for_the_state = min(res)
                         truck_and_drone_subproblems_costs[(bits, depot_point, k)] = minimum_value_for_the_state
@@ -98,8 +98,10 @@ class PhaseII:
 
 
 if __name__ == '__main__':
-    distances = [[0, 2, 9, 10], [1, 0, 6, 4], [15, 7, 0, 8], [6, 3, 12, 0]]
-    drone_costs = [[0, 1, 2, 3], [1, 0, 2, 3], [7, 3, 0, 3], [2, 1, 5, 0]]
+    # distances = [[0, 2, 9, 10], [1, 0, 6, 4], [15, 7, 0, 8], [6, 3, 12, 0]]
+    distances = [[0, 2, 9, 10, 5], [1, 0, 6, 4, 2], [15, 7, 0, 8, 6], [6, 3, 12, 0, 7], [4, 9, 8, 3, 0]]
+    # drone_costs = [[0, 1, 2, 3], [1, 0, 2, 3], [7, 3, 0, 3], [2, 1, 5, 0]]
+    drone_costs = [[0, 1, 2, 3, 2], [1, 0, 2, 3, 4], [7, 3, 0, 3, 1], [2, 1, 5, 0, 2], [4, 2, 1, 3, 0]]
     droneable_nodes = [3, 1]
     phaseII = PhaseII(distances, drone_costs=drone_costs, droneable_nodes=droneable_nodes)
     phaseII.solve_subproblems_truck_and_drone()

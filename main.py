@@ -65,7 +65,7 @@ if __name__ == "__main__":
         # problem "02" has 10 nodes
         # problem "01" has 25 nodes
         # problem "03" has 50 nodes
-        problem = "01"
+        problem = "02"
         output_file_solution_name = f"data/problems/{problem}/solutions/01_solution.csv"
         output_file_score_name = f"data/problems/{problem}/solutions/01_score.csv"
         mtsp_model = MTSP(
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             f"data/problems/{problem}/locations/tbl_locations_01.csv",
             f"data/problems/{problem}/locations/tbl_truck_travel_data_01.csv",
             "data/vehicles/tbl_vehicles_01.csv",
-            4,
+            1,
         )
 
         dpParser = DPParser(mtsp_model_dp.node, mtsp_model_dp.vehicle, mtsp_model_dp.travel)
@@ -93,8 +93,11 @@ if __name__ == "__main__":
         droneable_nodes = dpParser.droneable_nodes
         depot_point = dpParser.depot_point
 
+        # print(truck_time_costs)
+        print("Solving problem with dynamic programming approach...")
         dpSolver = SolverDP(truck_time_costs, drones_time_costs, droneable_nodes, depot_point)
-        print(dpSolver.optimal_cost, dpSolver.truck_path, dpSolver.drone_legs)
+        print("The optimal cost is {0} with truck path {1} and drone legs {2}".format(dpSolver.optimal_cost, dpSolver.truck_path, dpSolver.drone_legs))
+        print("The truck + drone path built by DP is: \n{0}".format(dpSolver.truck_drone_path))
 
     except:
         print("There was a problem.  Sorry things didn't work out.  Bye.")

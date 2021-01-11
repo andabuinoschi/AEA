@@ -97,13 +97,35 @@ class PhaseIII:
         truck_path.append(0)
         return optimal_cost, truck_path, drone_legs
 
+    def backtrack_truck_drone_path(self):
+        truck_and_drone_path = []
+        set_state = 2 ** self.n - 1
+        v = self.depot_point
+        truck_and_drone_path.append(v)
+
+        final_optimal_state = (set_state, v)
+        optimal_cost, u, _ = self.optimal_subproblem_cost[final_optimal_state]
+
+        while set_state != 2 ** v:
+            truck_and_drone_path.append(u)
+            set_state = set_state & ~(1 << v)
+            new_optimal_state = (set_state, u)
+            v = u
+            _, u, _ = self.optimal_subproblem_cost[new_optimal_state]
+
+        truck_and_drone_path.append(0)
+
+        return optimal_cost, list(reversed(truck_and_drone_path))
+
 
 if __name__ == '__main__':
-    distances = [[0, 2, 9, 10], [1, 0, 6, 4], [15, 7, 0, 8], [6, 3, 12, 0]]
-    drone_costs = [[0, 1, 2, 3], [1, 0, 2, 3], [7, 3, 0, 3], [2, 1, 5, 0]]
+    # distances = [[0, 2, 9, 10], [1, 0, 6, 4], [15, 7, 0, 8], [6, 3, 12, 0]]
+    distances = [[0, 2, 9, 10, 5], [1, 0, 6, 4, 2], [15, 7, 0, 8, 6], [6, 3, 12, 0, 7], [4, 9, 8, 3, 0]]
+    # drone_costs = [[0, 1, 2, 3], [1, 0, 2, 3], [7, 3, 0, 3], [2, 1, 5, 0]]
+    drone_costs = [[0, 1, 2, 3, 2], [1, 0, 2, 3, 4], [7, 3, 0, 3, 1], [2, 1, 5, 0, 2], [4, 2, 1, 3, 0]]
     droneable_nodes = [3, 1]
     phaseIII = PhaseIII(distances, drone_costs, droneable_nodes, 0)
     phaseIII.solve_entire_problem()
-    print(phaseIII.truck_and_drone_subproblems_costs)
+    # print(phaseIII.truck_and_drone_subproblems_costs)
     print(phaseIII.optimal_subproblem_cost)
-    print(phaseIII.backtrack_solution())
+    print(phaseIII.backtrack_truck_drone_path())
